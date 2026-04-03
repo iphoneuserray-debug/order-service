@@ -1,12 +1,12 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { StripeService } from './stripe.service';
+import { Body, Controller, Post } from '@nestjs/common';
+import { CartItem, StripeService } from './stripe.service';
 
 @Controller('stripe')
 export class StripeController {
     constructor(private stripeService: StripeService) { }
 
     @Post('PaymentIntent')
-    async createPaymentIntent(@Body() body: { amount: number; currency: string }) {
-        return await this.stripeService.createPaymentIntent(body.amount, body.currency);
+    async createPaymentIntent(@Body() body: { cart: CartItem[] }) {
+        return await this.stripeService.createPaymentIntent(body.cart);
     }
 }
