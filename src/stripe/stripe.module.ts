@@ -1,7 +1,8 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { StripeController } from './stripe.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { StripeService } from './stripe.service';
+import { Product } from '../products/product.entity';
 
 @Module({})
 export class StripeModule {
@@ -9,8 +10,7 @@ export class StripeModule {
     static forRootAsync(): DynamicModule {
         return {
             module: StripeModule,
-            controllers: [StripeController],
-            imports: [ConfigModule.forRoot()],
+            imports: [ConfigModule.forRoot(), TypeOrmModule.forFeature([Product])],
             providers: [
                 StripeService,
                 {
@@ -20,6 +20,7 @@ export class StripeModule {
                     inject: [ConfigService],
                 },
             ],
+            exports: [StripeService],
         };
     }
 }
