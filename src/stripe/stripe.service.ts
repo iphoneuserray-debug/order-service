@@ -1,7 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Stripe } from 'node_modules/stripe/cjs/stripe.core';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const StripeSDK = require('stripe');
 import { Product } from '../products/product.entity';
 
 export interface CartItem {
@@ -11,18 +12,18 @@ export interface CartItem {
 
 @Injectable()
 export class StripeService {
-    private stripe: Stripe;
+    private stripe: any;
 
     constructor(
         @Inject('STRIPE_API_KEY') private readonly apiKey: string,
         @InjectRepository(Product) private readonly productRepository: Repository<Product>,
     ) {
-        this.stripe = new Stripe(this.apiKey, {
+        this.stripe = new StripeSDK(this.apiKey, {
             apiVersion: '2026-03-25.dahlia',
         });
     }
 
-    async createPaymentIntent(cart: CartItem[]): Promise<Stripe.PaymentIntent> {
+    async createCheckoutSession(cart: CartItem[]): Promise<any> {
         const productIds = cart.map(item => item.productId);
         const products = await this.productRepository.findBy(
             productIds.map(id => ({ id })),
@@ -34,17 +35,23 @@ export class StripeService {
 
         const productMap = new Map(products.map(p => [p.id, p]));
 
-        const totalAud = cart.reduce((sum, item) => {
+        const lineItems = cart.map(item => {
             const product = productMap.get(item.productId)!;
-            return sum + product.priceAud * item.quantity;
-        }, 0);
+            return {
+                price_data: {
+                    currency: 'aud',
+                    unit_amount: Math.round(product.priceAud * 100),
+                    product_data: { name: product.name },
+                },
+                quantity: item.quantity,
+            };
+        });
 
-        // Stripe expects amount in cents
-        const amountInCents = Math.round(totalAud * 100);
-
-        return this.stripe.paymentIntents.create({
-            amount: amountInCents,
-            currency: 'aud',
+        return this.stripe.checkout.sessions.create({
+            mode: 'payment',
+            line_items: lineItems,
+            success_url: process.env.SUCCESS_URL ?? 'http://localhost:3001/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url: process.env.CANCEL_URL ?? 'http://localhost:3001/cancel',
         });
     }
 }

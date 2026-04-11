@@ -1,0 +1,23 @@
+### Get all products
+GET http://localhost:3000/products
+
+###  Create a product
+POST http://localhost:3000/products
+Content-Type: application/json
+
+{
+  "name": "Test Product",
+  "description": "A test product",
+  "priceAud": 29.99,
+  "availability": true
+}
+
+### Checkout (replace productId with real UUID from above)
+POST http://localhost:3000/payment/checkout
+Content-Type: application/json
+
+{
+  "cart": [
+    { "productId": "910b6cca-84e7-4a5d-95a7-993094f7e3ef", "quantity": 1 }
+  ]
+}

@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsEmail, IsInt, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsInt, IsUUID, Min, ValidateNested } from 'class-validator';
 
 export class CartItemDto {
     @IsUUID()
@@ -11,17 +11,6 @@ export class CartItemDto {
 }
 
 export class CheckoutDto {
-    // Customer info — used to find or create customer
-    @IsString()
-    name: string;
-
-    @IsEmail()
-    email: string;
-
-    @IsOptional()
-    @IsString()
-    phone?: string;
-
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => CartItemDto)
