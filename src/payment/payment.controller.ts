@@ -1,4 +1,6 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Headers, Post, Req } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
+import type { Request } from 'express';
 import { PaymentService } from './payment.service';
 import { CheckoutDto } from './payment.dto';
 
@@ -9,5 +11,13 @@ export class PaymentController {
     @Post('checkout')
     checkout(@Body() body: CheckoutDto) {
         return this.paymentService.checkout(body);
+    }
+
+    @Post('webhook')
+    webhook(
+        @Req() req: RawBodyRequest<Request>,
+        @Headers('stripe-signature') signature: string,
+    ) {
+        return this.paymentService.handleWebhook(req.rawBody!, signature);
     }
 }

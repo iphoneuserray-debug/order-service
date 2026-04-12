@@ -19,4 +19,7 @@ export class Product {
 
     @Column({ default: true })
     availability: boolean;
+
+    @Column({ type: 'text', nullable: true })
+    imageUrl: string | null;
 }

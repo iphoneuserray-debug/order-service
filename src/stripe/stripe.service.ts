@@ -50,8 +50,15 @@ export class StripeService {
         return this.stripe.checkout.sessions.create({
             mode: 'payment',
             line_items: lineItems,
+            metadata: { cart: JSON.stringify(cart) },
             success_url: process.env.SUCCESS_URL ?? 'http://localhost:3001/success?session_id={CHECKOUT_SESSION_ID}',
             cancel_url: process.env.CANCEL_URL ?? 'http://localhost:3001/cancel',
         });
+    }
+
+    constructWebhookEvent(payload: Buffer, signature: string) {
+        const secret = process.env.STRIPE_WEBHOOK_SECRET;
+        if (!secret) throw new Error('STRIPE_WEBHOOK_SECRET is not set');
+        return this.stripe.webhooks.constructEvent(payload, signature, secret);
     }
 }
