@@ -1,23 +1,170 @@
-### Get all products
-GET http://localhost:3000/products
+@baseUrl = http://localhost:3000
 
-###  Create a product
-POST http://localhost:3000/products
+# ─────────────────────────────────────────────
+# PRODUCTS
+# ─────────────────────────────────────────────
+
+### 1. List all products
+GET {{baseUrl}}/products
+
+###
+
+### 2. Filter products — available electronics under $300
+GET {{baseUrl}}/products/filter?tags=electronics&maxPrice=300&availability=true
+
+###
+
+### 3. Create a product
+# @name createProduct
+POST {{baseUrl}}/products
 Content-Type: application/json
 
 {
-  "name": "Test Product",
-  "description": "A test product",
-  "priceAud": 29.99,
+  "name": "4K Webcam",
+  "description": "Ultra-wide 4K webcam with built-in noise-cancelling mic.",
+  "priceAud": 149.00,
+  "tags": ["electronics", "peripherals", "webcam"],
   "availability": true
 }
 
-### Checkout (replace productId with real UUID from above)
-POST http://localhost:3000/payment/checkout
+###
+
+### 4. Get the product just created (paste ID from response above)
+@productId = {{createProduct.response.body.$.id}}
+GET {{baseUrl}}/products/{{productId}}
+
+###
+
+### 5. Update the product price
+PATCH {{baseUrl}}/products/{{productId}}
+Content-Type: application/json
+
+{
+  "priceAud": 129.00,
+  "availability": true
+}
+
+###
+
+### 6. Delete the product
+DELETE {{baseUrl}}/products/{{productId}}
+
+###
+
+
+# ─────────────────────────────────────────────
+# CUSTOMERS
+# ─────────────────────────────────────────────
+
+### 7. List all customers
+GET {{baseUrl}}/customers
+
+###
+
+### 8. Create a customer
+# @name createCustomer
+POST {{baseUrl}}/customers
+Content-Type: application/json
+
+{
+  "name": "David Park",
+  "email": "david.park@example.com",
+  "phone": "+61 400 777 888"
+}
+
+###
+
+### 9. Get the customer just created
+@customerId = {{createCustomer.response.body.$.id}}
+GET {{baseUrl}}/customers/{{customerId}}
+
+###
+
+### 10. Update the customer phone number
+PATCH {{baseUrl}}/customers/{{customerId}}
+Content-Type: application/json
+
+{
+  "phone": "+61 400 999 000"
+}
+
+###
+
+### 11. Delete the customer
+DELETE {{baseUrl}}/customers/{{customerId}}
+
+###
+
+
+# ─────────────────────────────────────────────
+# ORDERS
+# ─────────────────────────────────────────────
+
+### 12. List all orders
+GET {{baseUrl}}/orders
+
+###
+
+### 13. Create an order (replace IDs with real UUIDs from your DB)
+# @name createOrder
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerId": "PASTE_CUSTOMER_UUID",
+  "paymentMethod": "card",
+  "items": [
+    { "productId": "PASTE_PRODUCT_UUID", "quantity": 2 }
+  ]
+}
+
+###
+
+### 14. Get the order just created
+@orderId = {{createOrder.response.body.$.id}}
+GET {{baseUrl}}/orders/{{orderId}}
+
+###
+
+### 15. Get orders for a specific customer
+GET {{baseUrl}}/orders/customer/PASTE_CUSTOMER_UUID
+
+###
+
+### 16. Update order status to paid
+PATCH {{baseUrl}}/orders/{{orderId}}/status
+Content-Type: application/json
+
+{
+  "status": "paid"
+}
+
+###
+
+### 17. Update order status to failed
+PATCH {{baseUrl}}/orders/{{orderId}}/status
+Content-Type: application/json
+
+{
+  "status": "failed"
+}
+
+###
+
+
+# ─────────────────────────────────────────────
+# PAYMENT — CHECKOUT (Stripe)
+# ─────────────────────────────────────────────
+
+### 18. Checkout — creates a Stripe PaymentIntent
+# Returns { clientSecret } to confirm payment on the frontend
+POST {{baseUrl}}/payment/checkout
 Content-Type: application/json
 
 {
   "cart": [
-    { "productId": "910b6cca-84e7-4a5d-95a7-993094f7e3ef", "quantity": 1 }
+    { "productId": "PASTE_PRODUCT_UUID", "quantity": 1 }
   ]
 }
+
+###

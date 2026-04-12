@@ -40,7 +40,9 @@ export class ProductsService {
             qb.andWhere('product.priceAud <= :maxPrice', { maxPrice: filter.maxPrice });
         }
         if (filter.tags && filter.tags.length > 0) {
-            qb.andWhere('product.tags && :tags', { tags: filter.tags });
+            filter.tags.forEach((tag, i) => {
+                qb.andWhere(`product.tags LIKE :tag${i}`, { [`tag${i}`]: `%${tag}%` });
+            });
         }
 
         return qb.getMany();
