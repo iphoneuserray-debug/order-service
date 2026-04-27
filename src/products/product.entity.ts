@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { ProductImage } from './product-image.entity';
 
 @Entity()
 export class Product {
@@ -20,6 +21,6 @@ export class Product {
     @Column({ default: true })
     availability: boolean;
 
-    @Column({ type: 'text', nullable: true })
-    imageUrl: string | null;
+    @OneToMany(() => ProductImage, (image) => image.product)
+    images: ProductImage[];
 }

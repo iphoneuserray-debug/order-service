@@ -9,6 +9,7 @@ import { CustomersModule } from './customers/customers.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentModule } from './payment/payment.module';
 import { Product } from './products/product.entity';
+import { ProductImage } from './products/product-image.entity';
 import { Customer } from './customers/customer.entity';
 import { Order } from './orders/order.entity';
 import { OrderItem } from './orders/order-item.entity';
@@ -25,7 +26,7 @@ import { OrderItem } from './orders/order-item.entity';
                 username: config.get('DB_USERNAME'),
                 password: config.get('DB_PASSWORD'),
                 database: config.get('DB_NAME'),
-                entities: [Product, Customer, Order, OrderItem],
+                entities: [Product, ProductImage, Customer, Order, OrderItem],
                 synchronize: true,
             }),
         }),

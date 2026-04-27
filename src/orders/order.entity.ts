@@ -32,6 +32,9 @@ export class Order {
     @Column({ nullable: true })
     stripePaymentIntentId: string;
 
+    @Column({ nullable: true })
+    note: string;
+
     @CreateDateColumn()
     createdAt: Date;
 }
