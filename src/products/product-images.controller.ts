@@ -2,7 +2,9 @@ import {
     Controller,
     Delete,
     Get,
+    HttpCode,
     Param,
+    Patch,
     Post,
     UploadedFile,
     UseInterceptors,
@@ -29,7 +31,16 @@ export class ProductImagesController {
         return this.imagesService.create(productId, file);
     }
 
+    @Patch(':imageId/cover')
+    setCover(
+        @Param('productId') productId: string,
+        @Param('imageId') imageId: string,
+    ) {
+        return this.imagesService.setCover(productId, imageId);
+    }
+
     @Delete(':imageId')
+    @HttpCode(204)
     remove(
         @Param('productId') productId: string,
         @Param('imageId') imageId: string,

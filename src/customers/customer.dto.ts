@@ -10,6 +10,14 @@ export class CreateCustomerDto {
     @IsOptional()
     @IsString()
     phone?: string;
+
+    @IsOptional()
+    @IsString()
+    gender?: string;
+
+    @IsOptional()
+    @IsString()
+    wechatNumber?: string;
 }
 
 export class UpdateCustomerDto {
@@ -24,4 +32,12 @@ export class UpdateCustomerDto {
     @IsOptional()
     @IsString()
     phone?: string;
+
+    @IsOptional()
+    @IsString()
+    gender?: string;
+
+    @IsOptional()
+    @IsString()
+    wechatNumber?: string;
 }

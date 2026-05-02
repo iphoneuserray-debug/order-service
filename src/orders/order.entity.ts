@@ -13,7 +13,7 @@ export class Order {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @ManyToOne(() => Customer, customer => customer.orders)
+    @ManyToOne(() => Customer, customer => customer.orders, { onDelete: 'CASCADE' })
     customer: Customer;
 
     @OneToMany(() => OrderItem, item => item.order, { cascade: true })

@@ -15,6 +15,12 @@ export class Customer {
     @Column({ nullable: true })
     phone: string;
 
+    @Column({ nullable: true })
+    gender: string;
+
+    @Column({ nullable: true })
+    wechatNumber: string;
+
     // Stripe's own ID for this customer — lets you link payments in Stripe dashboard
     @Column({ nullable: true })
     stripeCustomerId: string;

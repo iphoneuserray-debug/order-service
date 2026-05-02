@@ -62,6 +62,24 @@ export class ProductImagesService implements OnModuleInit {
         return this.imageRepository.save(image);
     }
 
+    async setCover(productId: string, imageId: string): Promise<ProductImage[]> {
+        await this.productsService.findOne(productId);
+        const images = await this.imageRepository.find({
+            where: { product: { id: productId } },
+            order: { sortOrder: 'ASC' },
+        });
+        const target = images.find((img) => img.id === imageId);
+        if (!target) throw new Error(`Image ${imageId} not found`);
+        const currentCover = images[0];
+        if (currentCover.id !== target.id) {
+            const tmp = target.sortOrder;
+            target.sortOrder = currentCover.sortOrder;
+            currentCover.sortOrder = tmp;
+            await this.imageRepository.save([target, currentCover]);
+        }
+        return this.findAll(productId);
+    }
+
     async remove(productId: string, imageId: string): Promise<void> {
         const image = await this.imageRepository.findOne({
             where: { id: imageId, product: { id: productId } },
