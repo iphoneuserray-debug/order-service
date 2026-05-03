@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
 import { OrdersService } from './orders.service';
-import { CreateOrderDto, UpdateOrderStatusDto } from './order.dto';
+import { UpdateOrderDto } from './order.dto';
 import { Order } from './order.entity';
 
 @Controller('orders')
@@ -17,21 +17,11 @@ export class OrdersController {
         return this.ordersService.findOne(id);
     }
 
-    @Get('customer/:customerId')
-    findByCustomer(@Param('customerId') customerId: string): Promise<Order[]> {
-        return this.ordersService.findByCustomer(customerId);
-    }
-
-    @Post()
-    create(@Body() body: CreateOrderDto): Promise<Order> {
-        return this.ordersService.create(body);
-    }
-
-    @Patch(':id/status')
-    updateStatus(
+    @Patch(':id')
+    toggleCompleted(
         @Param('id') id: string,
-        @Body() body: UpdateOrderStatusDto,
+        @Body() body: UpdateOrderDto,
     ): Promise<Order> {
-        return this.ordersService.updateStatus(id, body.status);
+        return this.ordersService.toggleCompleted(id, body.completed);
     }
 }

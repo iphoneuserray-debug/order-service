@@ -1,13 +1,29 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const StripeSDK = require('stripe');
 import { Product } from '../products/product.entity';
+import { Coupon } from '../coupons/coupon.entity';
 
 export interface CartItem {
     productId: string;
     quantity: number;
+}
+
+export interface CustomerInfo {
+    name: string;
+    email: string;
+    phone?: string;
+    wechatNumber?: string;
+    deliveryType: 'pickup' | 'delivery';
+    deliveryAddress?: {
+        line1: string;
+        city: string;
+        state: string;
+        postalCode: string;
+    };
+    pickupLocationId?: string;
 }
 
 @Injectable()
@@ -23,7 +39,7 @@ export class StripeService {
         });
     }
 
-    async createCheckoutSession(cart: CartItem[]): Promise<any> {
+    async createPaymentIntent(cart: CartItem[], customer: CustomerInfo, coupon?: Coupon): Promise<{ clientSecret: string }> {
         const productIds = cart.map(item => item.productId);
         const products = await this.productRepository.findBy(
             productIds.map(id => ({ id })),
@@ -35,25 +51,38 @@ export class StripeService {
 
         const productMap = new Map(products.map(p => [p.id, p]));
 
-        const lineItems = cart.map(item => {
+        const totalAmount = cart.reduce((sum, item) => {
             const product = productMap.get(item.productId)!;
-            return {
-                price_data: {
-                    currency: 'aud',
-                    unit_amount: Math.round(product.priceAud * 100),
-                    product_data: { name: product.name },
-                },
-                quantity: item.quantity,
-            };
+            return sum + Math.round(product.priceAud * 100) * item.quantity;
+        }, 0);
+
+        let finalAmount = totalAmount;
+        if (coupon) {
+            const subtotalAud = totalAmount / 100;
+            if (coupon.minOrderAud && subtotalAud < Number(coupon.minOrderAud)) {
+                throw new BadRequestException(`Minimum order of $${Number(coupon.minOrderAud).toFixed(2)} required for this coupon.`);
+            }
+            finalAmount = coupon.type === 'percent'
+                ? Math.round(totalAmount * (1 - Number(coupon.value) / 100))
+                : Math.max(0, totalAmount - Math.round(Number(coupon.value) * 100));
+        }
+
+        const paymentIntent = await this.stripe.paymentIntents.create({
+            amount: finalAmount,
+            currency: 'aud',
+            payment_method_types: ['card'],
+            metadata: {
+                cart: JSON.stringify(cart),
+                customer: JSON.stringify(customer),
+                ...(coupon && { couponCode: coupon.code }),
+            },
         });
 
-        return this.stripe.checkout.sessions.create({
-            mode: 'payment',
-            line_items: lineItems,
-            metadata: { cart: JSON.stringify(cart) },
-            success_url: process.env.SUCCESS_URL ?? 'http://localhost:3001/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url: process.env.CANCEL_URL ?? 'http://localhost:3001/cancel',
-        });
+        return { clientSecret: paymentIntent.client_secret };
+    }
+
+    async getCharge(chargeId: string): Promise<any> {
+        return this.stripe.charges.retrieve(chargeId);
     }
 
     constructWebhookEvent(payload: Buffer, signature: string) {

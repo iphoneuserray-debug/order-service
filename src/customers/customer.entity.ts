@@ -1,5 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { Order } from '../orders/order.entity';
+import { Transaction } from '../transactions/transaction.entity';
 
 @Entity()
 export class Customer {
@@ -25,6 +25,6 @@ export class Customer {
     @Column({ nullable: true })
     stripeCustomerId: string;
 
-    @OneToMany(() => Order, order => order.customer)
-    orders: Order[];
+    @OneToMany(() => Transaction, transaction => transaction.customer)
+    transactions: Transaction[];
 }

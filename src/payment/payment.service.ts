@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { StripeService } from '../stripe/stripe.service';
 import { CustomersService } from '../customers/customers.service';
-import { OrdersService } from '../orders/orders.service';
-import { OrderStatus } from '../orders/order.entity';
+import { TransactionsService } from '../transactions/transactions.service';
+import { CouponsService } from '../coupons/coupons.service';
+import { TransactionStatus } from '../transactions/transaction.entity';
 import { CheckoutDto } from './payment.dto';
 
 @Injectable()
@@ -10,12 +11,23 @@ export class PaymentService {
     constructor(
         private readonly stripeService: StripeService,
         private readonly customersService: CustomersService,
-        private readonly ordersService: OrdersService,
+        private readonly transactionsService: TransactionsService,
+        private readonly couponsService: CouponsService,
     ) {}
 
     async checkout(data: CheckoutDto) {
-        const session = await this.stripeService.createCheckoutSession(data.cart);
-        return { url: session.url };
+        const { cart, couponCode, ...customer } = data;
+
+        let coupon: import('../coupons/coupon.entity').Coupon | undefined;
+        if (couponCode) {
+            const result = await this.couponsService.validateAsync(couponCode, Infinity);
+            if (!result.valid || !result.coupon) {
+                throw new BadRequestException(result.message ?? 'Invalid coupon code.');
+            }
+            coupon = result.coupon;
+        }
+
+        return this.stripeService.createPaymentIntent(cart, customer, coupon);
     }
 
     async handleWebhook(payload: Buffer, signature: string): Promise<void> {
@@ -26,30 +38,34 @@ export class PaymentService {
             throw new BadRequestException('Invalid Stripe webhook signature');
         }
 
-        if (event.type !== 'checkout.session.completed') return;
+        if (event.type !== 'payment_intent.succeeded') return;
 
-        const session = event.data.object;
-        const cart = JSON.parse(session.metadata?.cart ?? '[]');
-        const details = session.customer_details ?? {};
+        const paymentIntent = event.data.object;
+        const cart = JSON.parse(paymentIntent.metadata?.cart ?? '[]');
+        const customerInfo = JSON.parse(paymentIntent.metadata?.customer ?? '{}');
 
-        // Find or create customer
-        let customer = await this.customersService.findByEmail(details.email);
-        if (!customer) {
-            customer = await this.customersService.create({
-                name: details.name,
-                email: details.email,
-                phone: details.phone ?? undefined,
-            });
+        let customerId: string | undefined;
+        if (customerInfo.email) {
+            let customer = await this.customersService.findByEmail(customerInfo.email);
+            if (!customer) {
+                customer = await this.customersService.create({
+                    name: customerInfo.name ?? '',
+                    email: customerInfo.email,
+                    phone: customerInfo.phone ?? undefined,
+                    wechatNumber: customerInfo.wechatNumber ?? undefined,
+                });
+            }
+            customerId = customer.id;
         }
 
-        // Save order as PAID
-        const order = await this.ordersService.create({
-            customerId: customer.id,
+        // Save transaction as PAID (auto-creates a fulfillment Order)
+        const transaction = await this.transactionsService.create({
+            customerId,
             items: cart,
             paymentMethod: 'card',
-            stripePaymentIntentId: session.payment_intent,
+            stripePaymentIntentId: paymentIntent.id,
         });
 
-        await this.ordersService.updateStatus(order.id, OrderStatus.PAID);
+        await this.transactionsService.updateStatus(transaction.id, TransactionStatus.PAID);
     }
 }
