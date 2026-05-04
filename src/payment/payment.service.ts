@@ -58,12 +58,20 @@ export class PaymentService {
             customerId = customer.id;
         }
 
+        const deliveryAddress = customerInfo.deliveryAddress
+            ? [customerInfo.deliveryAddress.line1, customerInfo.deliveryAddress.city, customerInfo.deliveryAddress.state, customerInfo.deliveryAddress.postalCode].filter(Boolean).join(', ')
+            : undefined;
+
         // Save transaction as PAID (auto-creates a fulfillment Order)
         const transaction = await this.transactionsService.create({
             customerId,
             items: cart,
             paymentMethod: 'card',
             stripePaymentIntentId: paymentIntent.id,
+            deliveryType: customerInfo.deliveryType,
+            deliveryAddress,
+            pickupLocationId: customerInfo.pickupLocationId,
+            scheduledDate: customerInfo.scheduledDate,
         });
 
         await this.transactionsService.updateStatus(transaction.id, TransactionStatus.PAID);

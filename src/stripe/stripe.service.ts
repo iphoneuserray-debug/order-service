@@ -24,6 +24,7 @@ export interface CustomerInfo {
         postalCode: string;
     };
     pickupLocationId?: string;
+    scheduledDate?: string;
 }
 
 @Injectable()

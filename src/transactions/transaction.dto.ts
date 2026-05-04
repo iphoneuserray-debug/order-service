@@ -1,4 +1,4 @@
-import { IsArray, IsEnum, IsOptional, IsString, IsUUID, IsInt, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsOptional, IsString, IsUUID, IsInt, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { DeliveryType, TransactionStatus } from './transaction.entity';
 
@@ -44,6 +44,10 @@ export class CreateTransactionDto {
     @IsOptional()
     @IsString()
     note?: string;
+
+    @IsOptional()
+    @IsDateString()
+    scheduledDate?: string;
 }
 
 export class UpdateTransactionStatusDto {

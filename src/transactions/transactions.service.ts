@@ -90,6 +90,7 @@ export class TransactionsService {
             pickupLocation,
             stripePaymentIntentId: data.stripePaymentIntentId,
             note: data.note,
+            scheduledDate: data.scheduledDate,
         });
 
         const saved = await this.transactionRepository.save(transaction);

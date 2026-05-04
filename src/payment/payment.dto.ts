@@ -59,4 +59,8 @@ export class CheckoutDto {
     @IsOptional()
     @IsString()
     couponCode?: string;
+
+    @IsOptional()
+    @IsString()
+    scheduledDate?: string;
 }
