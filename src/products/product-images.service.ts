@@ -7,11 +7,10 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ProductImage } from './product-image.entity';
 import { ProductsService } from './products.service';
 
-const BUCKET = 'product-images';
-
 @Injectable()
 export class ProductImagesService implements OnModuleInit {
     private supabase: SupabaseClient;
+    private readonly bucket: string;
 
     constructor(
         @InjectRepository(ProductImage)
@@ -23,13 +22,14 @@ export class ProductImagesService implements OnModuleInit {
             this.configService.getOrThrow<string>('SUPABASE_URL'),
             this.configService.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY'),
         );
+        this.bucket = this.configService.getOrThrow<string>('SUPABASE_STORAGE_BUCKET');
     }
 
     async onModuleInit() {
         const { data: buckets } = await this.supabase.storage.listBuckets();
-        const exists = buckets?.some((b) => b.name === BUCKET);
+        const exists = buckets?.some((b) => b.name === this.bucket);
         if (!exists) {
-            await this.supabase.storage.createBucket(BUCKET, { public: true });
+            await this.supabase.storage.createBucket(this.bucket, { public: true });
         }
     }
 
@@ -46,12 +46,12 @@ export class ProductImagesService implements OnModuleInit {
         const filename = `${productId}/${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
 
         const { error } = await this.supabase.storage
-            .from(BUCKET)
+            .from(this.bucket)
             .upload(filename, file.buffer, { contentType: file.mimetype, upsert: false });
 
         if (error) throw new Error(`Storage upload failed: ${error.message}`);
 
-        const { data: urlData } = this.supabase.storage.from(BUCKET).getPublicUrl(filename);
+        const { data: urlData } = this.supabase.storage.from(this.bucket).getPublicUrl(filename);
 
         const count = await this.imageRepository.count({ where: { product: { id: productId } } });
         const image = this.imageRepository.create({
@@ -90,8 +90,8 @@ export class ProductImagesService implements OnModuleInit {
 
         try {
             const url = new URL(image.url);
-            const path = url.pathname.split(`/object/public/${BUCKET}/`)[1];
-            if (path) await this.supabase.storage.from(BUCKET).remove([path]);
+            const path = url.pathname.split(`/object/public/${this.bucket}/`)[1];
+            if (path) await this.supabase.storage.from(this.bucket).remove([path]);
         } catch {
             // ignore storage cleanup failure
         }

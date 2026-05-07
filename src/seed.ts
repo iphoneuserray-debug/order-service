@@ -12,7 +12,7 @@ import { PickupLocation } from './pickup-locations/pickup-location.entity';
 
 dotenv.config();
 
-const BUCKET = 'product-images';
+const BUCKET = process.env.SUPABASE_STORAGE_BUCKET ?? 'product-images';
 
 const AppDataSource = new DataSource({
     type: 'postgres',
