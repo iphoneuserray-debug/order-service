@@ -53,6 +53,9 @@ export class Transaction {
     @Column({ type: 'date', nullable: true })
     scheduledDate: string;
 
+    @Column({ nullable: true })
+    scheduledTime: string;
+
     @OneToOne(() => Order, order => order.transaction)
     order: Order;
 

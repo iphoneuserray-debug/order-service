@@ -48,6 +48,10 @@ export class CreateTransactionDto {
     @IsOptional()
     @IsDateString()
     scheduledDate?: string;
+
+    @IsOptional()
+    @IsString()
+    scheduledTime?: string;
 }
 
 export class UpdateTransactionStatusDto {

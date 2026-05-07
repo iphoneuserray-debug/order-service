@@ -72,6 +72,7 @@ export class PaymentService {
             deliveryAddress,
             pickupLocationId: customerInfo.pickupLocationId,
             scheduledDate: customerInfo.scheduledDate,
+            scheduledTime: customerInfo.scheduledTime,
         });
 
         await this.transactionsService.updateStatus(transaction.id, TransactionStatus.PAID);

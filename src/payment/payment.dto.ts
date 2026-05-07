@@ -63,4 +63,8 @@ export class CheckoutDto {
     @IsOptional()
     @IsString()
     scheduledDate?: string;
+
+    @IsOptional()
+    @IsString()
+    scheduledTime?: string;
 }
